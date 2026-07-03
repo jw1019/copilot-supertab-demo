@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copilot × Supertab — Paywall Demo</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --ink-2:#5c5c5c;
+    --ink-3:#8a8a8a;
+    --line:#e6e6e6;
+    --bg:#F8F4F1;
+    --chip:#f1ece7;
+    --user-bubble:#eee7e0;
+    --dark:#1f1f1f;
+    --blue:#2f6bff;
+    --blue-soft:#e8f0ff;
+    --green:#0f9d58;
+    --accent-tab:#111;
+    --radius:22px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 50% -10%,#2a2f3a,#14161c 60%,#0c0d11);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:100vh;
+    padding:34px 16px 80px;
+    color:var(--ink);
+  }
+  .stage-title{
+    color:#e9ebf2;text-align:center;margin:0 0 4px;font-size:19px;font-weight:650;letter-spacing:.2px;
+  }
+  .stage-sub{
+    color:#9aa0ad;text-align:center;margin:0 0 26px;font-size:13px;
+  }
+  .stage-sub b{color:#c7ccd6;font-weight:600;}
+
+  /* ---------- Phone ---------- */
+  .phone{
+    width:390px;height:844px;
+    background:var(--bg);
+    border-radius:52px;
+    position:relative;
+    box-shadow:0 0 0 12px #000, 0 0 0 14px #2b2b2b, 0 40px 90px rgba(0,0,0,.55);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:122px;height:33px;background:#000;border-radius:20px;z-index:60;}
+
+  /* status bar */
+  .statusbar{
+    height:52px;flex:0 0 52px;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 30px 8px;font-size:15px;font-weight:600;color:#000;z-index:50;
+  }
+  .statusbar .right{display:flex;align-items:center;gap:6px;}
+  .statusbar svg{display:block;}
+
+  /* app header */
+  .appbar{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:6px 16px 10px;
+  }
+  .appbar .icon-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#3a3a3a;border-radius:9px;}
+  .temp-pill{
+    display:flex;align-items:center;gap:7px;border:1px solid var(--line);
+    padding:7px 13px;border-radius:20px;font-size:13.5px;color:#3a3a3a;font-weight:500;
+  }
+  .temp-pill .dot{width:15px;height:15px;color:#6b6b6b;}
+
+  /* chat scroll area */
+  .chat{
+    flex:1 1 auto;overflow-y:auto;padding:6px 18px 30px;
+    display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;
+  }
+  .chat::-webkit-scrollbar{width:0;}
+
+  /* welcome */
+  .welcome{margin:14px 4px 6px;}
+  .welcome h1{font-size:28px;line-height:1.25;font-weight:600;margin:0;color:#1c1c1c;letter-spacing:-.3px;}
+  .welcome h1 .muted{color:#b9b9b9;}
+
+  .msg{max-width:100%;font-size:15.5px;line-height:1.55;}
+  .msg.user{align-self:flex-end;background:var(--user-bubble);padding:11px 16px;border-radius:20px 20px 6px 20px;max-width:80%;color:#2a2a2a;margin-bottom:16px;}
+  .msg.bot{align-self:flex-start;color:#232323;max-width:96%;}
+  .msg.bot p{margin:0 0 10px;}
+  .msg.bot p:last-child{margin-bottom:0;}
+  .msg.bot ul{margin:8px 0;padding-left:2px;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .msg.bot li{padding-left:18px;position:relative;color:#333;}
+  .msg.bot li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;border-radius:50%;background:#1c1c1c;}
+  .msg.bot b{font-weight:650;}
+  .msg.bot .u{border-bottom:1px solid #cfcfcf;}
+
+  .typing{display:flex;gap:5px;align-items:center;padding:4px 0;}
+  .typing span{width:8px;height:8px;border-radius:50%;background:#c2c2c2;animation:bounce 1.2s infinite;}
+  .typing span:nth-child(2){animation-delay:.15s;}
+  .typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-5px);opacity:1;}}
+
+  /* gated response block */
+  .gate{border-top:1px solid #d4d4d4;margin-top:6px;padding-top:20px;}
+  .gate .lead{color:#333;font-size:15px;margin:10px 0 14px;}
+  .gate-actions{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding-top:10px;}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:500;font-size:14.5px;border-radius:18px;padding:11px 26px;color:#1c1c1c;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.09);transition:transform .08s ease,box-shadow .16s ease;}
+  .btn:hover{box-shadow:0 5px 18px rgba(0,0,0,.14);}
+  .btn:active{transform:scale(.97);}
+  .or-line{color:#8a8a8a;font-size:15px;margin:2px 4px;}
+  .msg-actions{display:flex;align-items:center;gap:22px;margin-top:22px;color:#a2a2a2;}
+  .msg-actions svg{width:20px;height:20px;cursor:pointer;transition:color .15s;}
+  .msg-actions svg:hover{color:#555;}
+
+  /* answer chips row (welcome) */
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px;}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:18px;padding:9px 15px;font-size:13.5px;color:#3a3a3a;cursor:pointer;font-weight:500;}
+  .chip:active{background:var(--chip);}
+
+  /* input dock */
+  .dock{flex:0 0 auto;padding:8px 14px 6px;}
+  .composer{
+    border:1px solid #e4e4e4;border-radius:26px;padding:12px 14px 8px;background:#fff;
+    box-shadow:0 6px 20px rgba(0,0,0,.04);
+  }
+  .composer .field{display:flex;align-items:center;}
+  .composer input{
+    border:none;outline:none;font-size:16px;flex:1;font-family:inherit;color:#1c1c1c;background:transparent;
+  }
+  .composer input::placeholder{color:#9a9a9a;}
+  .composer .row2{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+  .smart{display:flex;align-items:center;gap:6px;color:#5a5a5a;font-size:14px;font-weight:500;padding:5px 8px;border-radius:14px;}
+  .plus{width:30px;height:30px;border:1px solid #e0e0e0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#4a4a4a;}
+  .send-btn{width:34px;height:34px;border-radius:50%;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;}
+  .send-btn:disabled{background:#e2e2e2;color:#b5b5b5;cursor:default;}
+  .mic{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:#4a4a4a;}
+
+  /* browser bottom bar */
+  .browserbar{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:8px 22px 18px;
+  }
+  .browserbar .bb{width:44px;height:44px;border-radius:50%;background:#f3f3f3;display:flex;align-items:center;justify-content:center;color:#3a3a3a;}
+  .urlpill{flex:1;margin:0 12px;background:#f3f3f3;border-radius:22px;height:44px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:14px;color:#3a3a3a;font-weight:500;}
+  .home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:135px;height:5px;border-radius:3px;background:#111;z-index:55;}
+
+  /* ---------- Overlays ---------- */
+  .scrim{
+    position:absolute;inset:0;background:rgba(0,0,0,.42);z-index:70;
+    opacity:0;pointer-events:none;transition:opacity .28s ease;
+  }
+  .scrim.show{opacity:1;pointer-events:auto;}
+
+  .sheet{
+    position:absolute;left:0;right:0;bottom:0;z-index:80;
+    background:#fff;border-radius:30px 30px 0 0;
+    padding:26px 24px 40px;
+    transform:translateY(110%);transition:transform .38s cubic-bezier(.22,1,.36,1);
+    box-shadow:0 -10px 40px rgba(0,0,0,.18);
+  }
+  .sheet.show{transform:translateY(0);}
+  .sheet .grip{width:38px;height:5px;border-radius:3px;background:#e2e2e2;margin:-8px auto 12px;}
+  .sheet .close{position:absolute;top:20px;right:20px;color:#9a9a9a;cursor:pointer;width:24px;height:24px;}
+  .tab-badge{display:flex;justify-content:center;padding:16px 0;}
+  .tab-badge .lg{display:flex;align-items:center;gap:7px;font-weight:700;color:#111;font-size:15px;letter-spacing:-.2px;}
+  .tab-badge .lg .mark{height:21px;width:auto;display:block;}
+  .sheet h2{text-align:center;font-size:21px;font-weight:750;margin:2px 0 8px;color:#141414;letter-spacing:-.2px;}
+  #sheetUpgrade h2{margin-top:12px;font-weight:600;}
+  #sheetPremium h2{font-weight:600;}
+  .sheet .sub{text-align:center;color:#7a7a7a;font-size:13.5px;line-height:1.5;margin:0 auto 20px;max-width:290px;}
+  .cta-primary{width:100%;background:var(--dark);color:#fff;border:none;border-radius:26px;padding:16px;font-size:16px;font-weight:650;cursor:pointer;font-family:inherit;transition:transform .08s,filter .15s;}
+  .cta-primary:active{transform:scale(.985);}
+  .cta-primary:hover{filter:brightness(1.12);}
+  .cta-secondary{width:100%;background:#fff;color:#1f1f1f;border:1.5px solid #dcdcdc;border-radius:26px;padding:16px;font-size:16px;font-weight:650;cursor:pointer;font-family:inherit;margin-top:2px;}
+  .cta-secondary:active{background:#f7f7f7;}
+  .group-note{display:flex;align-items:center;justify-content:center;gap:6px;color:#8a8a8a;font-size:12.5px;text-align:center;margin:14px 0 12px;}
+  .group-note .q{width:15px;height:15px;border-radius:50%;border:1px solid #c7c7c7;color:#9a9a9a;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+  .or-mid{display:flex;align-items:center;gap:12px;color:#9a9a9a;font-size:13px;font-style:italic;margin:6px 0 12px;}
+  .or-mid::before,.or-mid::after{content:"";height:1px;background:#ececec;flex:1;}
+
+  /* plans */
+  .plan{
+    border:1.5px solid #e6e6e6;border-radius:16px;padding:14px 16px;display:flex;align-items:center;
+    gap:13px;cursor:pointer;margin-bottom:11px;position:relative;transition:border-color .15s,box-shadow .15s;background:#fff;
+  }
+  .plan:hover{border-color:#cfcfcf;}
+  .plan.sel{border-color:#7a7a7a;}
+  .radio{width:22px;height:22px;border-radius:50%;border:2px solid #cbcbcb;flex:0 0 22px;display:flex;align-items:center;justify-content:center;}
+  .plan.sel .radio{border-color:#141414;}
+  .plan.sel .radio::after{content:"";width:11px;height:11px;border-radius:50%;background:#141414;}
+  .plan .info{flex:1;}
+  .plan .info .name{font-size:16px;font-weight:650;color:#191919;}
+  .plan .info .term{font-size:13px;color:#8a8a8a;margin-top:1px;}
+  .plan .price{font-size:18px;font-weight:750;color:#141414;white-space:nowrap;}
+  .save{position:absolute;top:-10px;right:12px;background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;}
+
+  .modal-scroll{max-height:640px;overflow-y:auto;}
+  .modal-scroll::-webkit-scrollbar{width:0;}
+
+  /* toast / success */
+  .success-wrap{text-align:center;padding:8px 0 4px;}
+  .check{width:64px;height:64px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:pop .4s ease;}
+  @keyframes pop{0%{transform:scale(.4);opacity:0;}70%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+
+  .unlock-badge{display:inline-flex;align-items:center;gap:6px;background:#eef6ee;color:var(--green);font-size:12.5px;font-weight:650;padding:5px 11px;border-radius:14px;margin-bottom:10px;}
+
+  .restart{position:fixed;bottom:20px;right:24px;z-index:200;background:#1c2029;color:#dfe3ec;border:1px solid #333a48;border-radius:22px;padding:11px 18px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;}
+  .restart:hover{background:#252b36;}
+
+  .fade-in{animation:fadeIn .4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+  <h1 class="stage-title">Copilot × Supertab — Monetization Prototype</h1>
+  <p class="stage-sub">Ask a question, hit the premium answer, and pay with <b>Supertab</b> — micro-payment or subscription.</p>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="home-ind"></div>
+
+    <!-- status bar -->
+    <div class="statusbar">
+      <span>9:28</span>
+      <span class="right">
+        <!-- signal -->
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".3"/></svg>
+        <!-- wifi -->
+        <svg width="17" height="12" viewBox="0 0 17 12"><path d="M8.5 2C5.6 2 3 3.1 1.1 4.9l1.4 1.4C4 4.9 6.1 4 8.5 4s4.5.9 6 2.3l1.4-1.4C14 3.1 11.4 2 8.5 2Z"/><path d="M8.5 6.2c-1.6 0-3 .6-4.1 1.6l1.5 1.5c.7-.6 1.6-1 2.6-1s1.9.4 2.6 1l1.5-1.5C11.5 6.8 10.1 6.2 8.5 6.2Z"/><circle cx="8.5" cy="11" r="1.3"/></svg>
+        <!-- battery -->
+        <svg width="27" height="13" viewBox="0 0 27 13"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="#000" stroke-opacity=".4"/><rect x="2.5" y="2.5" width="18" height="8" rx="2" fill="#000"/><rect x="24" y="4" width="2" height="5" rx="1" fill="#000" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <!-- app header -->
+    <div class="appbar">
+      <div class="icon-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+      </div>
+      <div class="temp-pill">
+        <svg class="dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 1 1-4.5-7.8L21 3l-.9 4.2A8.9 8.9 0 0 1 21 12Z"/></svg>
+        Temporary
+      </div>
+    </div>
+
+    <!-- chat -->
+    <div class="chat" id="chat">
+      <div class="welcome" id="welcome">
+        <h1>Hi there. <span class="muted">What should we dive into today?</span></h1>
+        <div class="chips">
+          <div class="chip" onclick="quickAsk(this)">Compose a song</div>
+          <div class="chip" onclick="quickAsk(this)">Brainstorm ideas</div>
+          <div class="chip" onclick="quickAsk(this)">Learn something</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- input dock -->
+    <div class="dock" id="dock">
+      <div class="composer">
+        <div class="field">
+          <input id="input" type="text" placeholder="Message Copilot" autocomplete="off">
+        </div>
+        <div class="row2">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="plus">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <div class="smart">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 5.6L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.4z"/></svg>
+              Smart
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <button class="send-btn" id="sendBtn" onclick="onSend()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- browser bar -->
+    <div class="browserbar">
+      <div class="bb">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="urlpill">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+        copilot.microsoft.com
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg>
+      </div>
+      <div class="bb">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      </div>
+    </div>
+
+    <!-- ===== Overlays ===== -->
+    <div class="scrim" id="scrim" onclick="closeAll()"></div>
+
+    <!-- Premium answer sheet -->
+    <div class="sheet" id="sheetPremium">
+      <div class="grip"></div>
+      <div class="close" onclick="closeAll()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </div>
+      
+      <h2>Premium Answer for $0.25</h2>
+      <p class="sub">Get access to flagship AI models, unlimited chats, image generation and more</p>
+      <button class="cta-primary" onclick="payNow('answer')">Get Access Now, Pay Later</button>
+      <div class="group-note">We group your small purchases into one simple charge <span class="q">?</span></div>
+      <div class="or-mid">or</div>
+      <button class="cta-secondary" onclick="openUpgrade()">More Access Options</button>
+    </div>
+
+    <!-- Upgrade plan sheet -->
+    <div class="sheet" id="sheetUpgrade">
+      <div class="modal-scroll">
+      <div class="grip"></div>
+      <div class="close" onclick="closeAll()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </div>
+      
+      <h2>Upgrade Your Plan</h2>
+      <p class="sub">Get access to flagship AI models, unlimited chats, image generation and more</p>
+
+      <div class="plan" data-plan="monthly" onclick="selectPlan(this)">
+        <div class="radio"></div>
+        <div class="info"><div class="name">Standard Monthly</div><div class="term">20 USD/month</div></div>
+        <div class="price">$0.67<span style="font-size:13px;font-weight:500;color:#8a8a8a;">/day</span></div>
+      </div>
+      <div class="plan sel" data-plan="quarterly" onclick="selectPlan(this)">
+        <div class="save">Save 25%</div>
+        <div class="radio"></div>
+        <div class="info"><div class="name">Standard Quarterly</div><div class="term">45 USD/quarter</div></div>
+        <div class="price">$0.5<span style="font-size:13px;font-weight:500;color:#8a8a8a;">/day</span></div>
+      </div>
+      <div class="plan" data-plan="yearly" onclick="selectPlan(this)">
+        <div class="save">Save 63%</div>
+        <div class="radio"></div>
+        <div class="info"><div class="name">Standard Yearly</div><div class="term">90 USD/year</div></div>
+        <div class="price">$0.25<span style="font-size:13px;font-weight:500;color:#8a8a8a;">/day</span></div>
+      </div>
+
+      <button class="cta-primary" style="margin-top:14px;margin-bottom:20px" onclick="payNow('plan')">Subscribe — <span id="planLabel">Standard Quarterly</span></button>
+
+      <div class="or-mid">or</div>
+      <div style="text-align:center;font-weight:700;font-size:16px;color:#141414;margin-bottom:12px;">Premium Answer for $0.25</div>
+      <button class="cta-secondary" onclick="payNow('answer')">Get Access Now, Pay Later</button>
+      <div class="group-note">We group your small purchases into one simple charge <span class="q">?</span></div>
+      </div>
+    </div>
+
+    <!-- Success sheet -->
+    <div class="sheet" id="sheetSuccess">
+      <div class="grip"></div>
+      <div class="success-wrap">
+        <div class="check">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><polyline points="20 6 9 17 4 11"/></svg>
+        </div>
+        <h2 id="successTitle">You're all set</h2>
+        <p class="sub" id="successSub">Your premium answer is unlocked. Supertab added $0.25 to your tab — pay later in one simple charge.</p>
+        <button class="cta-primary" onclick="revealAnswer()">See your answer</button>
+      </div>
+    </div>
+
+  </div>
+
+  <button class="restart" onclick="resetDemo()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg>
+    Restart demo
+  </button>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+let step = 0;           // conversation progress
+let selectedPlan = 'quarterly';
+let payMode = 'answer'; // 'answer' | 'plan'
+let userTopic = 'your project';
+
+// Derive a short, readable topic from the user's message so the
+// premium offer reflects what they actually asked about.
+function topicFrom(text){
+  const t = text.toLowerCase();
+  if(t.includes('song')||t.includes('music')||t.includes('lyric')) return 'your song';
+  if(t.includes('learn')||t.includes('study')||t.includes('understand')) return 'what you want to learn';
+  if(t.includes('business')||t.includes('startup')||t.includes('product')||t.includes('pitch')) return 'your business idea';
+  if(t.includes('brainstorm')||t.includes('idea')||t.includes('project')||t.includes('build')) return 'your project';
+  let s = text
+    .replace(/^(i (need|want|would like|wanna)|can you|could you|please|help me|help|tell me|i'm|i am)\b[\s,]*/i,'')
+    .replace(/[.?!]+$/,'').trim();
+  if(!s) return 'your question';
+  if(s.length>48) s = s.slice(0,45).trim() + '…';
+  return s;
+}
+
+function scrollDown(){ requestAnimationFrame(()=>{ chat.scrollTop = chat.scrollHeight; }); }
+
+function addUser(text){
+  const el = document.createElement('div');
+  el.className = 'msg user fade-in';
+  el.textContent = text;
+  chat.appendChild(el); scrollDown();
+}
+function addBot(html){
+  const el = document.createElement('div');
+  el.className = 'msg bot fade-in';
+  el.innerHTML = html;
+  chat.appendChild(el); scrollDown();
+  return el;
+}
+function typing(){
+  const el = document.createElement('div');
+  el.className = 'msg bot';
+  el.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  chat.appendChild(el); scrollDown();
+  return el;
+}
+function botAfterTyping(html, delay=1100){
+  const t = typing();
+  return new Promise(res=>{
+    setTimeout(()=>{ t.remove(); const el = addBot(html); res(el); }, delay);
+  });
+}
+
+function quickAsk(chip){
+  input.value = chip.textContent === 'Brainstorm ideas'
+    ? 'I need help brainstorming some ideas. Ask me about what I\'m working on.'
+    : chip.textContent;
+  onSend();
+}
+
+function hideWelcome(){
+  const w = document.getElementById('welcome');
+  if(w) w.remove();
+}
+
+async function onSend(){
+  const text = input.value.trim();
+  if(!text) return;
+  hideWelcome();
+  input.value = '';
+
+  userTopic = topicFrom(text);
+  addUser(text);
+  // Free overview, then a suggestion chip offering the in-depth (premium) answer.
+  await botAfterTyping(`
+    <p>Sounds good — here's a quick free overview to get us started. A few angles you could take:</p>
+    <ul>
+      <li><b class="u">Creative project</b> — writing, worldbuilding, art, storytelling, character design</li>
+      <li><b class="u">Business idea</b> — product, startup concept, service, pitch, strategy</li>
+      <li><b class="u">Technical build</b> — app, tool, workflow, automation, prototype</li>
+      <li><b class="u">Personal goal</b> — habit, routine, learning plan, life improvement</li>
+    </ul>
+    <p>Want me to go deeper? I can put together an <b>in-depth answer for ${userTopic}</b> — a tailored roadmap with expert-level detail.</p>`, 1200);
+  showGate();
+}
+
+async function showGate(){
+  hideWelcome();
+  step = 2;
+  await botAfterTyping(`
+    <div class="gate">
+      <p class="lead">Here's the in-depth answer for <b>${userTopic}</b> — a tailored roadmap with expert-level detail. This is a <b>premium response</b> and costs <b>$0.25</b>.</p>
+      <div class="gate-actions">
+        <button class="btn" onclick="openUpgrade()">Upgrade Plan</button>
+        <span class="or-line">or</span>
+        <button class="btn" onclick="openPremium()">Get premium answer for $0.25</button>
+      </div>
+      <div class="msg-actions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+      </div>
+    </div>`, 500);
+}
+
+/* ---------- overlays ---------- */
+function show(el){ document.getElementById('scrim').classList.add('show'); el.classList.add('show'); }
+function hide(el){ el.classList.remove('show'); }
+function closeAll(){
+  document.getElementById('scrim').classList.remove('show');
+  ['sheetPremium','sheetUpgrade','sheetSuccess'].forEach(id=>hide(document.getElementById(id)));
+}
+function openPremium(){ closeSheetsOnly(); show(document.getElementById('sheetPremium')); }
+function openUpgrade(){ closeSheetsOnly(); show(document.getElementById('sheetUpgrade')); }
+function closeSheetsOnly(){ ['sheetPremium','sheetUpgrade','sheetSuccess'].forEach(id=>hide(document.getElementById(id))); }
+
+function selectPlan(el){
+  document.querySelectorAll('.plan').forEach(p=>p.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedPlan = el.dataset.plan;
+  const names = {monthly:'Standard Monthly', quarterly:'Standard Quarterly', yearly:'Standard Yearly'};
+  document.getElementById('planLabel').textContent = names[selectedPlan];
+}
+
+function payNow(mode){
+  payMode = mode;
+  closeSheetsOnly();
+  const title = document.getElementById('successTitle');
+  const sub = document.getElementById('successSub');
+  if(mode === 'answer'){
+    title.textContent = "You're all set";
+    sub.innerHTML = "Your premium answer is unlocked. Supertab added <b>$0.25</b> to your tab — pay later in one simple charge.";
+  } else {
+    const names = {monthly:'Standard Monthly', quarterly:'Standard Quarterly', yearly:'Standard Yearly'};
+    title.textContent = "Welcome to " + names[selectedPlan];
+    sub.innerHTML = "Your subscription is active. Enjoy unlimited premium answers, flagship models, and image generation.";
+  }
+  show(document.getElementById('sheetSuccess'));
+}
+
+function revealAnswer(){
+  closeAll();
+  step = 3;
+  const badge = payMode === 'answer'
+    ? '<span class="unlock-badge">✓ Unlocked with Supertab · $0.25</span>'
+    : '<span class="unlock-badge">✓ Premium · included in your plan</span>';
+  setTimeout(()=>{
+    addBot(`${badge}
+      <p><b>In-depth answer — ${userTopic}</b></p>
+      <p>Here's a full, tailored roadmap for ${userTopic}:</p>
+      <ul>
+        <li><b>Phase 1 · Foundations (Week 1)</b> — Nail the core goal and the single question this needs to answer. Lock a one-line definition of success.</li>
+        <li><b>Phase 2 · Deep structure (Weeks 2–3)</b> — Map the key pieces, constraints, and dependencies. Keep a living doc with your 3 non-negotiables.</li>
+        <li><b>Phase 3 · Build the core (Week 4)</b> — Focus on the one element that carries the most weight and develop it end-to-end before anything else.</li>
+        <li><b>Phase 4 · Ship a first artifact (Weeks 5–6)</b> — Put one concrete, shareable version into the world. Momentum beats completeness.</li>
+      </ul>
+      <p>Want me to expand any phase into weekly tasks, or take the next step on ${userTopic}?</p>`);
+  }, 350);
+}
+
+/* ---------- reset ---------- */
+function resetDemo(){
+  closeAll();
+  chat.innerHTML = `
+    <div class="welcome" id="welcome">
+      <h1>Hi there. <span class="muted">What should we dive into today?</span></h1>
+      <div class="chips">
+        <div class="chip" onclick="quickAsk(this)">Compose a song</div>
+        <div class="chip" onclick="quickAsk(this)">Brainstorm ideas</div>
+        <div class="chip" onclick="quickAsk(this)">Learn something</div>
+      </div>
+    </div>`;
+  step = 0; selectedPlan='quarterly'; userTopic='your project'; input.value='';
+}
+
+input.addEventListener('keydown', e=>{ if(e.key==='Enter') onSend(); });
+</script>
+</body>
+</html>
